@@ -11,17 +11,22 @@ com busca por CEP e por cidade.
 - Health check com verificação da conexão com o banco;
 - Carga automática dos dados na inicialização: a tabela é criada
   (se não existir) e o CSV é importado (se o banco estiver vazio);
-- Tratamento global de erros: o cliente recebe apenas mensagens
-  genéricas, enquanto detalhes técnicos vão para os logs.
+- Tratamento global de erros: falhas internas de banco retornam
+  mensagens genéricas; os detalhes técnicos ficam apenas nos logs.
+
+Fonte dos dados: [CSV público de CEPs (2019)](https://raw.githubusercontent.com/miltonhit/miltonhit/main/public-assets/cep-20190602.csv),
+baixado durante a inicialização.
 
 ## Stack
 
 | Tecnologia | Uso |
 |---|---|
 | [FastAPI](https://fastapi.tiangolo.com/) | Framework da API |
+| [Uvicorn](https://www.uvicorn.org/) | Servidor ASGI |
 | MySQL | Armazenamento dos endereços |
 | mysql-connector-python | Driver assíncrono com pool de conexões |
 | Pydantic | Modelos de request/response |
+| httpx | Download do CSV de CEPs |
 | Poetry | Gerenciamento de dependências |
 | pytest / pytest-asyncio | Testes automatizados |
 
@@ -147,6 +152,7 @@ Verifica a aplicação e a conexão com o banco.
 | 400 | CEP ou cidade vazios | `"CEP não pode ser vazio"` |
 | 400 | `limit` fora da faixa (1–500) | `"Limite não pode ser maior que 500"` |
 | 404 | CEP ou cidade sem resultado | `"CEP 00000000 não encontrado"` |
+| 422 | `limit` com valor não numérico | erros de validação (padrão FastAPI) |
 | 500 | Falha de banco de dados | `"Erro ao executar consulta"` (genérica) |
 | 503 | Banco indisponível no health check | `"Database unavailable"` |
 
@@ -159,18 +165,9 @@ nos logs via `logging` e **não** são expostos na resposta.
 poetry run pytest
 ```
 
-- **Testes unitários** (serviço de CSV, repositório de setup) rodam
-  sem banco: usam fakes/`tmp_path`;
+- **Testes unitários** (`CSVFileService`, `SetupRepository`) rodam sem
+  banco: usam fakes e `tmp_path`;
 - **Testes de integração** (`tests/test_controller.py`) exigem o
   `.env` configurado e um MySQL acessível com os dados carregados —
   sem isso, falham com 500/503.
 
-## Boas práticas aplicadas
-
-- Queries sempre parametrizadas (sem concatenação de SQL);
-- Pool de conexões reutilizado (sem abrir conexão por requisição);
-- `LIMIT` obrigatório na busca por cidade, evitando respostas
-  gigantes e consumo excessivo de memória;
-- Separação de responsabilidades por camadas, guiada por interfaces;
-- Commit seguindo Conventional Commits (`feat`, `fix`, `refactor`,
-  `test`, `chore`, `docs`).
