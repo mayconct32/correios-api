@@ -21,7 +21,7 @@ async def test_get_by_zip_code(client):
     assert response.json() == {
         "state": "MG",
         "city": "Carangola",
-        "Neighborhood": "Alvorada",
+        "neighborhood": "Alvorada",
         "zipcode": "36803000",
         "street": ""
     }

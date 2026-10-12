@@ -1,7 +1,8 @@
-from typing import List
+from http import HTTPStatus
 from fastapi import APIRouter, Depends
 from src.correios_cep.service.correios_service import CorreiosService
 from src.correios_cep.container import container
+from src.correios_cep.exceptions import AppException
 from src.correios_cep.model.address import Address
 
 
@@ -39,7 +40,24 @@ async def get_by_zip_code(
     return await service.get_address_by_postal_code(zipcode=zipcode)
 
 
-@app.get("/city/{city}", response_model=List[Address])
+@app.get("/zip/")
+async def get_by_zip_code_empty():
+    """
+    Trata requisições sem CEP informado.
+
+    A rota /zip/{zipcode} não captura o caminho vazio; sem este handler,
+    a requisição receberia 404 em vez de uma mensagem de validação.
+
+    Parâmetros:
+        Nenhum.
+
+    Lança:
+        AppException: erro 400 indicando que o CEP é obrigatório.
+    """
+    raise AppException("CEP não pode ser vazio", status_code=HTTPStatus.BAD_REQUEST)
+
+
+@app.get("/city/{city}", response_model=list[Address])
 async def get_by_city(
     city: str,
     service: CorreiosService = Depends(get_correios_service)
@@ -52,6 +70,23 @@ async def get_by_city(
         service (CorreiosService): serviço responsável pela busca.
 
     Retorna:
-        List[Address]: lista de endereços encontrados para a cidade.
+        list[Address]: lista de endereços encontrados para a cidade.
     """
-    return await service.get_address_by_city(city=city) 
+    return await service.get_address_by_city(city=city)
+
+
+@app.get("/city/")
+async def get_by_city_empty():
+    """
+    Trata requisições sem cidade informada.
+
+    A rota /city/{city} não captura o caminho vazio; sem este handler,
+    a requisição receberia 404 em vez de uma mensagem de validação.
+
+    Parâmetros:
+        Nenhum.
+
+    Lança:
+        AppException: erro 400 indicando que a cidade é obrigatória.
+    """
+    raise AppException("Cidade não pode ser vazia", status_code=HTTPStatus.BAD_REQUEST)
