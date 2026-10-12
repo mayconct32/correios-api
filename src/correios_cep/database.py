@@ -73,21 +73,19 @@ class MysqlDBConnection(IDatabaseConnection):
                 raise DatabaseException(f"Erro ao criar pool de conexões: {e}") from e
         return self._pool
 
-    async def _run(self, sql: str, data=None, operation="SELECT") -> list[dict] | None:
+    async def query(self, sql: str, data=None) -> list[dict]:
         """
-        Executa uma operação usando uma conexão emprestada do pool.
+        Executa uma consulta (SELECT) usando uma conexão do pool.
 
-        Parâmetros:
-            sql (str): query SQL a ser executada.
-            data: parâmetros da query.
-            operation (str): "SELECT" retorna as linhas; demais valores
-                apenas executam e confirmam a transação.
+        Args:
+            sql: Query SQL de consulta.
+            data: Parâmetros da query.
 
-        Retorna:
-            list[dict] | None: linhas para SELECT; None para escritas.
+        Returns:
+            Lista de dicionários com as linhas encontradas.
 
-        Lança:
-            DatabaseException: em falhas de conexão ou execução.
+        Raises:
+            DatabaseException: Em falhas de conexão ou execução.
         """
         pool = await self._get_pool()
         try:
@@ -98,32 +96,41 @@ class MysqlDBConnection(IDatabaseConnection):
         try:
             async with await connection.cursor(dictionary=True) as cursor:
                 await cursor.execute(sql, data)
-                if operation == "SELECT":
-                    return await cursor.fetchall()
-                await connection.commit()
+                return await cursor.fetchall()
+        except Exception as e:
+            raise DatabaseException(f"Erro ao executar consulta: {e}") from e
+        finally:
+            await connection.close()  # devolve a conexão ao pool
+
+    async def execute(self, sql: str, data=None) -> None:
+        """
+        Executa uma operação de escrita (INSERT/UPDATE/DELETE/DDL)
+        usando uma conexão do pool e confirma a transação.
+
+        Args:
+            sql: Query SQL de escrita.
+            data: Parâmetros da query.
+
+        Returns:
+            None.
+
+        Raises:
+            DatabaseException: Em falhas de conexão ou execução.
+        """
+        pool = await self._get_pool()
+        try:
+            connection = await pool.get_connection()
+        except Exception as e:
+            raise DatabaseException(f"Erro ao obter conexão do pool: {e}") from e
+
+        try:
+            async with await connection.cursor(dictionary=True) as cursor:
+                await cursor.execute(sql, data)
+            await connection.commit()
         except Exception as e:
             raise DatabaseException(f"Erro ao executar operação: {e}") from e
         finally:
             await connection.close()  # devolve a conexão ao pool
-
-    async def execute(
-        self,
-        sql: str,
-        data=None,
-        operation="SELECT"
-    ):
-        """
-        Executa uma query SQL.
-
-        Args:
-            sql: Query SQL a ser executada.
-            data: Parâmetros da query.
-            operation: "SELECT" retorna linhas; demais executam e commitam.
-
-        Returns:
-            Lista de dicionários para SELECT; None para operações de escrita.
-        """
-        return await self._run(sql=sql, data=data, operation=operation)
 
     async def close(self) -> None:
         """

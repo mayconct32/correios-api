@@ -11,16 +11,31 @@ class IDatabaseConnection(ABC):
     """
 
     @abstractmethod
-    async def execute(self, sql: str, data: tuple = ()) -> list[dict]:
+    async def query(self, sql: str, data: tuple = ()) -> list[dict]:
         """
-        Executa uma query SQL.
+        Executa uma consulta (SELECT) e retorna as linhas encontradas.
 
         Args:
-            sql: Query SQL a ser executada.
+            sql: Query SQL de consulta.
             data: Parâmetros da query.
 
         Returns:
             Lista de dicionários com os resultados.
+        """
+        pass
+
+    @abstractmethod
+    async def execute(self, sql: str, data: tuple = ()) -> None:
+        """
+        Executa uma operação de escrita (INSERT/UPDATE/DELETE/DDL)
+        e confirma a transação.
+
+        Args:
+            sql: Query SQL de escrita.
+            data: Parâmetros da query.
+
+        Returns:
+            None.
         """
         pass
 

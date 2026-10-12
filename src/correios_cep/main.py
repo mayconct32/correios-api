@@ -111,7 +111,7 @@ async def health_check():
     """
     try:
         db = container.get_db_connection()
-        await db.execute("SELECT 1")
+        await db.query("SELECT 1")
         
         return {
             "message": "OK",
