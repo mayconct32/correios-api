@@ -27,24 +27,31 @@ class Container:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(Container, cls).__new__(cls)
+            cls._instance._db_connection = None
+            cls._instance._setup_repository = None
+            cls._instance._correios_repository = None
         return cls._instance
     
     def get_db_connection(self) -> IDatabaseConnection:
         """
-        Cria uma nova instância de conexão com o banco de dados MySQL.
+        Retorna a conexão (pool) compartilhada com o banco de dados MySQL,
+        criando-a apenas na primeira chamada.
 
         Parâmetros:
             Nenhum.
 
         Retorna:
-            IDatabaseConnection: conexão configurada para o banco da
-                aplicação.
+            IDatabaseConnection: mesma instância de pool em todas as
+                chamadas, evitando uma conexão nova por requisição.
         """
-        return MysqlDBConnection()
+        if self._db_connection is None:
+            self._db_connection = MysqlDBConnection()
+        return self._db_connection
 
     def get_setup_repository(self) -> ISetupRepository:
         """
-        Cria um SetupRepository associado a uma nova conexão de banco.
+        Retorna o SetupRepository compartilhado, criando-o apenas na
+        primeira chamada.
 
         Parâmetros:
             Nenhum.
@@ -53,11 +60,14 @@ class Container:
             ISetupRepository: repositório para carga e verificação de
                 CEPs.
         """
-        return SetupRepository(self.get_db_connection())
+        if self._setup_repository is None:
+            self._setup_repository = SetupRepository(self.get_db_connection())
+        return self._setup_repository
 
     def get_correios_repository(self) -> ICorreiosRepository:
         """
-        Cria um CorreiosRepository associado a uma nova conexão de banco.
+        Retorna o CorreiosRepository compartilhado, criando-o apenas na
+        primeira chamada.
 
         Parâmetros:
             Nenhum.
@@ -66,7 +76,9 @@ class Container:
             ICorreiosRepository: repositório usado nas consultas de
                 endereços.
         """
-        return CorreiosRepository(self.get_db_connection())
+        if self._correios_repository is None:
+            self._correios_repository = CorreiosRepository(self.get_db_connection())
+        return self._correios_repository
     
     def get_correios_service(self) -> CorreiosService:
         """

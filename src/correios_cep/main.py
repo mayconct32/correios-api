@@ -59,6 +59,15 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 60)
     yield
 
+    logger.info("Encerrando aplicação - fechando pool de conexões do banco")
+    try:
+        db_connection = container.get_db_connection()
+        await db_connection.close()
+        logger.info("✓ Pool de conexões encerrado")
+    except Exception as e:
+        logger.warning(f"Erro ao encerrar pool de conexões: {e}")
+    logger.info("Aplicação encerrada")
+
 
 app = FastAPI(
     lifespan=lifespan, 

@@ -24,6 +24,19 @@ class IDatabaseConnection(ABC):
         """
         pass
 
+    @abstractmethod
+    async def close(self) -> None:
+        """
+        Encerra as conexões com o banco de dados.
+
+        Deve ser chamado no shutdown da aplicação para liberar os
+        recursos do pool de conexões.
+
+        Returns:
+            None.
+        """
+        pass
+
 
 class ICorreiosRepository(ABC):
     """
