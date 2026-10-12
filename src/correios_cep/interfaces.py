@@ -59,27 +59,35 @@ class ICorreiosRepository(ABC):
 
     O Service depende desta abstração, não do CorreiosRepository concreto.
     Isso permite trocar o repositório sem modificar o Service.
+
+    O repositório apenas acessa dados: não decide regras de negócio
+    (ex.: quando lançar "não encontrado"), apenas retorna o que o banco
+    tem (ou vazio).
     """
 
     @abstractmethod
-    async def get_the_address(
-        self,
-        zipcode: str | None = None,
-        city: str | None = None
-    ) -> Address | list[Address]:
+    async def find_by_zipcode(self, zipcode: str) -> Address | None:
         """
-        Busca endereços por CEP ou cidade.
+        Busca um endereço pelo CEP.
 
         Args:
-            zipcode: CEP como filtro principal (retorna no máximo 1).
-            city: Nome da cidade (usado se CEP não informado).
+            zipcode: CEP com 8 dígitos.
 
         Returns:
-            Address ou lista de Address.
+            O endereço encontrado ou None quando não existir.
+        """
+        pass
 
-        Raises:
-            AddressNotFoundException: Quando nenhum endereço for encontrado.
-            ValueError: Quando nenhum filtro for fornecido.
+    @abstractmethod
+    async def find_by_city(self, city: str) -> list[Address]:
+        """
+        Busca todos os endereços pertencentes a uma cidade.
+
+        Args:
+            city: Nome da cidade.
+
+        Returns:
+            Lista (possivelmente vazia) de endereços.
         """
         pass
 
