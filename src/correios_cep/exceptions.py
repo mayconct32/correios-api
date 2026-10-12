@@ -29,7 +29,13 @@ class AppException(Exception):
 
 
 class DatabaseException(AppException):
-    """Exceção relacionada a operações de banco de dados"""
+    """
+    Exceção relacionada a operações de banco de dados.
+
+    A mensagem deve permanecer genérica: detalhes do driver (host,
+    usuário, SQL etc.) não podem ser expostos ao cliente — devem ser
+    registrados nos logs no ponto em que o erro ocorre.
+    """
     status_code = 500
     default_message = "Erro ao acessar banco de dados"
 

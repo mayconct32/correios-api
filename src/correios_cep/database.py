@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv
 from mysql.connector.aio import pooling
@@ -6,6 +7,8 @@ from src.correios_cep.interfaces import IDatabaseConnection
 
 
 load_dotenv(override=True)
+
+logger = logging.getLogger(__name__)
 
 
 class MysqlDBConnection(IDatabaseConnection):
@@ -70,7 +73,8 @@ class MysqlDBConnection(IDatabaseConnection):
                     **self._config()
                 )
             except Exception as e:
-                raise DatabaseException(f"Erro ao criar pool de conexões: {e}") from e
+                logger.error(f"Erro ao criar pool de conexões: {e}")
+                raise DatabaseException("Erro ao criar pool de conexões") from e
         return self._pool
 
     async def query(self, sql: str, data=None) -> list[dict]:
@@ -91,14 +95,16 @@ class MysqlDBConnection(IDatabaseConnection):
         try:
             connection = await pool.get_connection()
         except Exception as e:
-            raise DatabaseException(f"Erro ao obter conexão do pool: {e}") from e
+            logger.error(f"Erro ao obter conexão do pool: {e}")
+            raise DatabaseException("Erro ao obter conexão do pool") from e
 
         try:
             async with await connection.cursor(dictionary=True) as cursor:
                 await cursor.execute(sql, data)
                 return await cursor.fetchall()
         except Exception as e:
-            raise DatabaseException(f"Erro ao executar consulta: {e}") from e
+            logger.error(f"Erro ao executar consulta: {e}")
+            raise DatabaseException("Erro ao executar consulta") from e
         finally:
             await connection.close()  # devolve a conexão ao pool
 
@@ -121,14 +127,16 @@ class MysqlDBConnection(IDatabaseConnection):
         try:
             connection = await pool.get_connection()
         except Exception as e:
-            raise DatabaseException(f"Erro ao obter conexão do pool: {e}") from e
+            logger.error(f"Erro ao obter conexão do pool: {e}")
+            raise DatabaseException("Erro ao obter conexão do pool") from e
 
         try:
             async with await connection.cursor(dictionary=True) as cursor:
                 await cursor.execute(sql, data)
             await connection.commit()
         except Exception as e:
-            raise DatabaseException(f"Erro ao executar operação: {e}") from e
+            logger.error(f"Erro ao executar operação: {e}")
+            raise DatabaseException("Erro ao executar operação") from e
         finally:
             await connection.close()  # devolve a conexão ao pool
 
