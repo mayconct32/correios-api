@@ -33,20 +33,23 @@ class CorreiosRepository(ICorreiosRepository):
         rows = await self._db_connection.query(sql=sql, data=(zipcode,))
         return Address(**rows[0]) if rows else None
 
-    async def find_by_city(self, city: str) -> list[Address]:
+    async def find_by_city(self, city: str, limit: int = 100) -> list[Address]:
         """
-        Busca todos os endereços de uma cidade.
+        Busca endereços de uma cidade, com limite de resultados.
 
         Parâmetros:
             city (str): nome da cidade.
+            limit (int): número máximo de endereços retornados.
 
         Retorna:
-            list[Address]: endereços encontrados (pode ser vazia).
+            list[Address]: endereços encontrados (pode ser vazia),
+                limitados ao valor informado.
         """
         sql = """
             SELECT zipcode, state, city, neighborhood, street
             FROM addresses
             WHERE city = %s
+            LIMIT %s
         """
-        rows = await self._db_connection.query(sql=sql, data=(city,))
+        rows = await self._db_connection.query(sql=sql, data=(city, limit))
         return [Address(**row) for row in rows]

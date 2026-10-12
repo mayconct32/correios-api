@@ -55,6 +55,32 @@ async def test_get_by_city_200(client):
 
 
 @pytest.mark.asyncio
+async def test_get_by_city_with_limit(client):
+    response = await client.get("/city/Carangola", params={"limit": 2})
+    assert response.status_code == HTTPStatus.OK
+    assert isinstance(response.json(), list)
+    assert len(response.json()) <= 2
+
+
+@pytest.mark.asyncio
+async def test_get_by_city_limit_zero(client):
+    response = await client.get("/city/Carangola", params={"limit": 0})
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {
+        "detail": "Limite deve ser maior que zero"
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_by_city_limit_above_max(client):
+    response = await client.get("/city/Carangola", params={"limit": 501})
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+    assert response.json() == {
+        "detail": "Limite não pode ser maior que 500"
+    }
+
+
+@pytest.mark.asyncio
 async def test_get_by_city_404(client):
     city = "invalid_city"
     response = await client.get(f"city/{city}")

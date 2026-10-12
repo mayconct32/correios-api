@@ -1,6 +1,10 @@
 from http import HTTPStatus
 from fastapi import APIRouter, Depends
-from src.correios_cep.service.correios_service import CorreiosService
+from src.correios_cep.service.correios_service import (
+    CorreiosService,
+    DEFAULT_CITY_LIMIT,
+    MAX_CITY_LIMIT
+)
 from src.correios_cep.container import container
 from src.correios_cep.exceptions import AppException
 from src.correios_cep.model.address import Address
@@ -60,19 +64,23 @@ async def get_by_zip_code_empty():
 @app.get("/city/{city}", response_model=list[Address])
 async def get_by_city(
     city: str,
+    limit: int = DEFAULT_CITY_LIMIT,
     service: CorreiosService = Depends(get_correios_service)
 ):
     """
-    Retorna todos os endereços pertencentes à cidade informada.
+    Retorna endereços pertencentes à cidade informada, com limite de
+    resultados.
 
     Parâmetros:
         city (str): nome da cidade usada como filtro.
+        limit (int): número máximo de endereços retornados; deve estar
+            entre 1 e MAX_CITY_LIMIT (padrão: DEFAULT_CITY_LIMIT).
         service (CorreiosService): serviço responsável pela busca.
 
     Retorna:
         list[Address]: lista de endereços encontrados para a cidade.
     """
-    return await service.get_address_by_city(city=city)
+    return await service.get_address_by_city(city=city, limit=limit)
 
 
 @app.get("/city/")

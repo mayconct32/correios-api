@@ -1,6 +1,11 @@
+from http import HTTPStatus
 from src.correios_cep.interfaces import ICorreiosRepository
-from src.correios_cep.exceptions import AddressNotFoundException
+from src.correios_cep.exceptions import AddressNotFoundException, AppException
 from src.correios_cep.model.address import Address
+
+
+DEFAULT_CITY_LIMIT = 100
+MAX_CITY_LIMIT = 500
 
 
 class CorreiosService:
@@ -45,20 +50,38 @@ class CorreiosService:
             raise AddressNotFoundException(f"CEP {zipcode} não encontrado")
         return address
 
-    async def get_address_by_city(self, city: str) -> list[Address]:
+    async def get_address_by_city(self, city: str,
+                                  limit: int = DEFAULT_CITY_LIMIT) -> list[Address]:
         """
-        Retorna todos os endereços localizados em uma cidade.
+        Retorna endereços localizados em uma cidade, com limite de
+        resultados para evitar respostas excessivamente grandes.
 
         Parâmetros:
             city (str): nome da cidade usado como filtro da consulta.
+            limit (int): número máximo de endereços retornados; deve
+                estar entre 1 e MAX_CITY_LIMIT.
 
         Retorna:
-            list[Address]: lista de endereços encontrados para a cidade.
+            list[Address]: lista de endereços encontrados para a
+            cidade, limitada ao valor informado.
 
         Lança:
+            AppException: quando o limite informado é inválido.
             AddressNotFoundException: quando a cidade não tem endereços.
         """
-        addresses = await self._correios_repository.find_by_city(city=city)
+        if limit < 1:
+            raise AppException(
+                "Limite deve ser maior que zero",
+                status_code=HTTPStatus.BAD_REQUEST
+            )
+        if limit > MAX_CITY_LIMIT:
+            raise AppException(
+                f"Limite não pode ser maior que {MAX_CITY_LIMIT}",
+                status_code=HTTPStatus.BAD_REQUEST
+            )
+        addresses = await self._correios_repository.find_by_city(
+            city=city, limit=limit
+        )
         if not addresses:
             raise AddressNotFoundException(f"Nenhum endereço em {city}")
         return addresses

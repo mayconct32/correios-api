@@ -79,15 +79,18 @@ class ICorreiosRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_city(self, city: str) -> list[Address]:
+    async def find_by_city(self, city: str, limit: int = 100) -> list[Address]:
         """
-        Busca todos os endereços pertencentes a uma cidade.
+        Busca endereços pertencentes a uma cidade, com limite de
+        resultados.
 
         Args:
             city: Nome da cidade.
+            limit: Número máximo de endereços retornados.
 
         Returns:
-            Lista (possivelmente vazia) de endereços.
+            Lista (possivelmente vazia) de endereços, limitada ao
+            valor informado.
         """
         pass
 
