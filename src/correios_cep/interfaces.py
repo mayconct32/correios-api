@@ -117,6 +117,19 @@ class ISetupRepository(ABC):
         pass
 
     @abstractmethod
+    async def create_addresses_table(self) -> None:
+        """
+        Cria a tabela de endereços a partir do script SQL do projeto.
+
+        Deve ser idempotente: não altera o banco quando a tabela já
+        existe.
+
+        Returns:
+            None.
+        """
+        pass
+
+    @abstractmethod
     async def check_postal_codes_exist(self) -> bool:
         """
         Verifica se já existem registros de CEP na tabela de endereços.

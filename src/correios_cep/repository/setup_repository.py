@@ -1,9 +1,12 @@
+from pathlib import Path
 from src.correios_cep.interfaces import IDatabaseConnection, ISetupRepository
 
 
 class SetupRepository(ISetupRepository):
     def __init__(self, db_connection: IDatabaseConnection):
         self._db_connection = db_connection
+        # addresses.sql fica na raiz do pacote (um nível acima de repository/)
+        self._table_script = Path(__file__).parent.parent / "addresses.sql"
 
     async def insert_address(self, file_path: str) -> bool:
         """
@@ -28,6 +31,23 @@ class SetupRepository(ISetupRepository):
             data=(file_path,),
         )
         return True
+
+    async def create_addresses_table(self) -> None:
+        """
+        Cria a tabela de endereços caso ela ainda não exista.
+
+        Executa o script SQL em addresses.sql (raiz do pacote), que usa
+        CREATE TABLE IF NOT EXISTS para garantir idempotência: quando a
+        tabela já existe, o banco ignora o comando sem erros.
+
+        Parâmetros:
+            Nenhum.
+
+        Retorna:
+            None.
+        """
+        script = self._table_script.read_text(encoding="utf-8")
+        await self._db_connection.execute(sql=script)
 
     async def check_postal_codes_exist(self) -> bool:
         """

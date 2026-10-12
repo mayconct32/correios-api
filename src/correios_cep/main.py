@@ -36,6 +36,9 @@ async def lifespan(app: FastAPI):
     try:
         setup_repository = container.get_setup_repository()
         
+        # Garante que a tabela de endereços exista
+        await setup_repository.create_addresses_table()
+        
         # Verifica se dados já estão carregados
         dados_existem = await setup_repository.check_postal_codes_exist()
         

@@ -1,4 +1,4 @@
-CREATE TABLE addresses (
+CREATE TABLE IF NOT EXISTS addresses (
     state CHAR(2) NOT NULL,
     city VARCHAR(75) NOT NULL,
     neighborhood VARCHAR(100),
