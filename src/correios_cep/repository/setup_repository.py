@@ -40,12 +40,12 @@ class SetupRepository(ISetupRepository):
             bool: True se houver ao menos um registro de CEP, senão
                 False.
         """
-        response = await self._db_connection.execute(
+        rows = await self._db_connection.query(
             sql="""
                 SELECT COUNT(*) as count
                 FROM addresses
             """
         )
-        count = response[0]["count"]
+        count = rows[0]["count"]
         return count > 0
 
